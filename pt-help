@@ -1,0 +1,91 @@
+#!/bin/bash
+
+# Project Tracker Help System
+
+PT_GUIDE="$HOME/.local/bin/pt-guide.md"
+
+case "${1:-overview}" in
+    "guide"|"doc"|"docs")
+        if command -v mdcat >/dev/null 2>&1; then
+            mdcat "$PT_GUIDE"
+        elif command -v glow >/dev/null 2>&1; then
+            glow "$PT_GUIDE"
+        else
+            cat "$PT_GUIDE"
+        fi
+        ;;
+    "commands"|"cmd")
+        echo "Project Tracker (pt) - Quick Command Reference"
+        echo "=============================================="
+        echo ""
+        echo "PROJECT MANAGEMENT:"
+        echo "  pt add-project <name> [-p path] [-d description]  Add new project"
+        echo "  pt projects [-s status]                          List projects"
+        echo "  pt status [project]                              Show status"
+        echo ""
+        echo "TASK MANAGEMENT:"
+        echo "  pt add <project> \"<title>\" [-d desc] [-p priority] Add task"
+        echo "  pt list [-p project] [-s status]                List tasks"
+        echo "  pt start <task_id>                               Start task"
+        echo "  pt complete <task_id>                            Complete task"
+        echo "  pt block <task_id>                               Block task"
+        echo ""
+        echo "INTEGRATION:"
+        echo "  pt-setup-git [project]                          Setup Git hooks"
+        echo "  pt-enhance-claude <project|--all> [--backup]    Enhance CLAUDE.md"
+        echo "  pt-dev start <project> [-t task_id]             Start dev session"
+        echo "  pt-dev status                                   System status"
+        echo "  pt-dev end                                      End dev session"
+        echo ""
+        echo "HELP:"
+        echo "  pt-help                                         This help"
+        echo "  pt-help guide                                   Full user guide"
+        echo "  pt-help git                                     Git integration help"
+        ;;
+    "git")
+        echo "Git Integration Help"
+        echo "==================="
+        echo ""
+        echo "Setup:"
+        echo "  pt-setup-git                    # Setup all projects"
+        echo "  pt-setup-git \"project-name\"    # Setup specific project"
+        echo ""
+        echo "Commit Message Patterns:"
+        echo "  pt:123 completed                # Mark task as completed"
+        echo "  pt:123 done                     # Mark task as completed"
+        echo "  pt:123 progress                 # Mark task as in progress"
+        echo "  pt:123 working                  # Mark task as in progress"
+        echo "  pt:123 blocked                  # Mark task as blocked"
+        echo "  pt:123                          # Log activity (no status change)"
+        echo ""
+        echo "Examples:"
+        echo "  git commit -m \"Add user auth pt:45 completed\""
+        echo "  git commit -m \"Working on payment gateway pt:89 progress\""
+        echo "  git commit -m \"Database issue pt:12 blocked\""
+        ;;
+    "overview"|*)
+        echo "🛠️  Project Tracker (pt) - Overview"
+        echo "===================================="
+        echo ""
+        echo "A comprehensive CLI project management system with:"
+        echo "  • Task and project tracking"
+        echo "  • Git integration with automatic updates"
+        echo "  • Development session optimization"
+        echo "  • Claude Code integration via enhanced CLAUDE.md"
+        echo "  • Integration with your existing performance scripts"
+        echo ""
+        echo "Quick Start:"
+        echo "  pt add-project \"my-project\" -p \"/path/to/project\""
+        echo "  pt add \"my-project\" \"First task\" -p high"
+        echo "  pt-setup-git \"my-project\""
+        echo "  pt-dev start \"my-project\""
+        echo ""
+        echo "Get Help:"
+        echo "  pt-help commands           # Command reference"
+        echo "  pt-help git               # Git integration help"
+        echo "  pt-help guide             # Full user guide"
+        echo ""
+        echo "Current Status:"
+        pt status 2>/dev/null || echo "  Run 'pt projects' to see your projects"
+        ;;
+esac

@@ -10,18 +10,28 @@ from typing import List, Dict, Optional, Any
 import subprocess
 import textwrap
 
-# Check if we're running from the project directory with venv
-project_dir = Path(__file__).parent
-venv_python = project_dir / 'venv' / 'bin' / 'python'
-if venv_python.exists() and sys.executable != str(venv_python):
-    # Re-run with the virtual environment Python
+# Check if we need to use the virtual environment
+global_venv_python = Path.home() / '.local' / 'share' / 'project-tracker' / 'venv' / 'bin' / 'python'
+project_venv_python = Path(__file__).parent / 'venv' / 'bin' / 'python'
+
+# Use global venv if available, otherwise try project venv
+venv_python = None
+if global_venv_python.exists():
+    venv_python = global_venv_python
+elif project_venv_python.exists():
+    venv_python = project_venv_python
+
+# Re-run with virtual environment if needed and available
+if venv_python and sys.executable != str(venv_python):
     os.execv(str(venv_python), [str(venv_python)] + sys.argv)
 
 try:
     import google.generativeai as genai
 except ImportError:
-    print("Error: google-generativeai not installed. Run:")
-    print("cd ~/Development/project-tracker && source venv/bin/activate && pip install google-generativeai")
+    print("Error: google-generativeai not installed.")
+    print("The AI features require the Google Generative AI package.")
+    print("It should be installed automatically with the project tracker.")
+    print("If needed, run: pip install --user google-generativeai")
     sys.exit(1)
 
 class Colors:
@@ -122,14 +132,54 @@ class ProjectTrackerAI:
         # Secure the config file
         os.chmod(self.config_path, 0o600)
 
+    def load_env_file(self, env_path: Path) -> Dict[str, str]:
+        """Load environment variables from .env file."""
+        env_vars = {}
+        if env_path.exists():
+            try:
+                with open(env_path, 'r') as f:
+                    for line in f:
+                        line = line.strip()
+                        if line and not line.startswith('#') and '=' in line:
+                            key, value = line.split('=', 1)
+                            env_vars[key.strip()] = value.strip()
+            except Exception:
+                pass  # Silently fail if .env file is malformed
+        return env_vars
+
+    def get_api_key(self) -> Optional[str]:
+        """Get API key from multiple sources in priority order."""
+        # Priority 1: Environment variable (highest - works everywhere)
+        api_key = os.getenv('GOOGLE_AI_API_KEY')
+        if api_key:
+            return api_key
+
+        # Priority 2: Global .env file in home directory
+        global_env = self.load_env_file(Path.home() / '.env')
+        api_key = global_env.get('GOOGLE_AI_API_KEY')
+        if api_key:
+            return api_key
+
+        # Priority 3: Project-specific .env file
+        project_env = self.load_env_file(Path(__file__).parent / '.env')
+        api_key = project_env.get('GOOGLE_AI_API_KEY')
+        if api_key:
+            return api_key
+
+        # Priority 4: Project tracker config (existing system)
+        return self.config.get('api_key')
+
     def setup_genai(self):
         """Setup Google Generative AI."""
-        api_key = self.config.get('api_key') or os.getenv('GOOGLE_AI_API_KEY')
+        api_key = self.get_api_key()
 
         if not api_key:
             self.log("⚠ Google AI API key not configured.", Colors.YELLOW)
-            self.log("Set it with: pt ai config --api-key YOUR_API_KEY", Colors.CYAN)
-            self.log("Or set environment variable: export GOOGLE_AI_API_KEY=your_key", Colors.CYAN)
+            self.log("Setup options (in priority order):", Colors.CYAN)
+            self.log("1. Global environment: export GOOGLE_AI_API_KEY=your_key", Colors.CYAN)
+            self.log("2. Global ~/.env file: GOOGLE_AI_API_KEY=your_key", Colors.CYAN)
+            self.log("3. Project .env file: Create .env in project directory", Colors.CYAN)
+            self.log("4. Local config: pt ai config --api-key YOUR_API_KEY", Colors.CYAN)
             return False
 
         try:
@@ -498,11 +548,31 @@ Keep the response practical and actionable."""
             else:
                 self.log("✗ Failed to connect to Google AI.", Colors.RED)
         else:
+            # Check current key source
+            current_key = self.get_api_key()
+            key_source = "Not set"
+            if current_key:
+                if os.getenv('GOOGLE_AI_API_KEY'):
+                    key_source = "Environment variable"
+                elif (Path.home() / '.env').exists():
+                    global_env = self.load_env_file(Path.home() / '.env')
+                    if global_env.get('GOOGLE_AI_API_KEY'):
+                        key_source = "Global ~/.env file"
+                elif (Path(__file__).parent / '.env').exists():
+                    project_env = self.load_env_file(Path(__file__).parent / '.env')
+                    if project_env.get('GOOGLE_AI_API_KEY'):
+                        key_source = "Project .env file"
+                elif self.config.get('api_key'):
+                    key_source = "Local config file"
+
             self.log("Current AI Configuration:", Colors.BLUE)
             self.log(f"  Model: {self.config['model']}")
             self.log(f"  Max Tokens: {self.config['max_tokens']}")
             self.log(f"  Temperature: {self.config['temperature']}")
-            self.log(f"  API Key: {'Set' if self.config.get('api_key') else 'Not set'}")
+            self.log(f"  API Key Source: {key_source}")
+
+            if current_key:
+                self.log(f"  API Key: ***...{current_key[-4:]} (secured)", Colors.GREEN)
 
 def main():
     ai = ProjectTrackerAI()

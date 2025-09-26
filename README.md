@@ -52,7 +52,8 @@ pt-dev start "my-project" -t 1
 git commit -m "Add user authentication pt:1 completed"
 
 # AI Features (requires Google AI Studio API key)
-pt-ai config --api-key YOUR_GOOGLE_AI_KEY
+# Get your free API key: https://aistudio.google.com/apikey
+export GOOGLE_AI_API_KEY=your_key  # Global setup (recommended)
 pt-ai add "my-project" "create user dashboard with real-time analytics"
 pt-ai chat "my-project" "how should I implement caching for this API?"
 ```

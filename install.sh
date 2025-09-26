@@ -33,6 +33,7 @@ scripts=(
     "pt-setup-git.py"
     "pt-enhance-claude.py"
     "pt-dev-session.py"
+    "pt-ai.py"
     "pt-help"
 )
 
@@ -70,6 +71,7 @@ symlinks=(
     "pt-setup-git.py:pt-setup-git"
     "pt-enhance-claude.py:pt-enhance-claude"
     "pt-dev-session.py:pt-dev"
+    "pt-ai.py:pt-ai"
 )
 
 for link in "${symlinks[@]}"; do
@@ -81,6 +83,22 @@ for link in "${symlinks[@]}"; do
         log "   ✓ $target -> $source"
     fi
 done
+
+# Setup Python virtual environment for AI features
+log "${CYAN}🐍 Setting up Python virtual environment for AI features...${NC}"
+if command -v python3 >/dev/null 2>&1; then
+    if [[ ! -d "$HOME/.local/share/project-tracker/venv" ]]; then
+        python3 -m venv "$HOME/.local/share/project-tracker/venv"
+        log "   ✓ Virtual environment created"
+    fi
+
+    source "$HOME/.local/share/project-tracker/venv/bin/activate"
+    pip install --quiet google-generativeai
+    deactivate
+    log "   ✓ Google Generative AI installed"
+else
+    log "   ${YELLOW}⚠ Python3 not found - AI features will be limited${NC}"
+fi
 
 # Initialize database
 log "${CYAN}🗄️  Initializing database...${NC}"
@@ -110,6 +128,12 @@ log "  ${CYAN}pt add-project \"my-project\" -p \"/path/to/project\"${NC} # Add p
 log "  ${CYAN}pt add \"my-project\" \"First task\" -p high${NC}        # Add task"
 log "  ${CYAN}pt-setup-git \"my-project\"${NC}                       # Enable Git integration"
 log "  ${CYAN}pt-dev start \"my-project\"${NC}                       # Start dev session"
+log ""
+log "AI Features (requires API key):"
+log "  ${CYAN}pt-ai config --api-key YOUR_GOOGLE_AI_KEY${NC}        # Configure AI"
+log "  ${CYAN}pt-ai add \"my-project\" \"create user auth system\"${NC}  # Natural language tasks"
+log "  ${CYAN}pt-ai chat \"my-project\" \"how to implement OAuth?\"${NC} # Ask questions"
+log "  ${CYAN}pt-ai analyze 123${NC}                            # AI analysis of task"
 log ""
 log "Documentation:"
 log "  ${CYAN}pt-help guide${NC}                              # Full user guide"

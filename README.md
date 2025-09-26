@@ -24,6 +24,12 @@ A comprehensive CLI-based project and task management system designed for develo
 - Automatic project type detection and agent recommendations
 - Active task listings and quick command references
 
+🤖 **AI-Powered Features** *(New!)*
+- Natural language task creation using Google AI Studio
+- Intelligent project consultation and guidance
+- Task analysis with implementation recommendations
+- Interactive AI chat sessions with full project context
+
 ## Quick Start
 
 ```bash
@@ -44,6 +50,11 @@ pt-dev start "my-project" -t 1
 
 # Use Git commit messages to update tasks
 git commit -m "Add user authentication pt:1 completed"
+
+# AI Features (requires Google AI Studio API key)
+pt-ai config --api-key YOUR_GOOGLE_AI_KEY
+pt-ai add "my-project" "create user dashboard with real-time analytics"
+pt-ai chat "my-project" "how should I implement caching for this API?"
 ```
 
 ## Installation
@@ -86,6 +97,13 @@ pt-help  # Get started
 ### Claude Code Enhancement
 - `pt-enhance-claude <project|--all>` - Generate enhanced CLAUDE.md files
 
+### AI Features
+- `pt-ai config --api-key <key>` - Configure Google AI Studio
+- `pt-ai add <project> "<description>"` - Create tasks from natural language
+- `pt-ai chat <project> "<question>"` - Ask AI about your project
+- `pt-ai analyze <task_id>` - Get AI insights on tasks
+- `pt-ai interactive <project>` - Start interactive AI session
+
 ## Architecture
 
 - **project-tracker.py** - Main CLI application with SQLite database
@@ -93,6 +111,7 @@ pt-help  # Get started
 - **pt-setup-git.py** - Git integration setup and management
 - **pt-enhance-claude.py** - CLAUDE.md file enhancement with tracking metadata
 - **pt-dev-session.py** - Development session management with performance optimization
+- **pt-ai.py** - AI integration with Google AI Studio for natural language processing
 - **pt-claude-template.md** - Template for enhanced CLAUDE.md files
 - **pt-help** - Comprehensive help system
 
@@ -103,9 +122,14 @@ pt-help  # Get started
 
 ### Tasks
 - ID, project_id, title, description, status, priority, due_date, timestamps
+- AI fields: ai_generated, ai_estimate_hours, ai_complexity
 
 ### Git Activity
 - ID, project_id, task_id, commit_hash, branch, message, timestamp
+
+### AI Features
+- ai_conversations: Conversation history with project context
+- ai_insights: AI-generated analysis and recommendations
 
 ## Integration Features
 
@@ -136,6 +160,7 @@ Generated CLAUDE.md files include:
 - SQLite3
 - Linux environment (tested on Arch Linux)
 - Optional: gaming-performance.sh and nvidia-gaming-performance.sh scripts
+- Optional: Google AI Studio API key for AI features
 
 ## Contributing
 
